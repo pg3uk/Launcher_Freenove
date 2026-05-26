@@ -26,17 +26,48 @@ static inline void resumeSdInstallInput() {
 }
 
 bool setupSdCard() {
+    bool mounted = false;
 #if !defined(SDM_SD) // fot Lilygo T-Display S3 with lilygo shield
 #if defined(USE_SD_MMC) && defined(PIN_SD_CLK) && defined(PIN_SD_CMD) && defined(PIN_SD_D0)
     SD_MMC.end();
     vTaskDelay(pdTICKS_TO_MS(20));
+
+    // SDMMC lines generally need pull-ups; enable the internal ones as a fallback.
+    pinMode(PIN_SD_CMD, INPUT_PULLUP);
+    pinMode(PIN_SD_D0, INPUT_PULLUP);
+#if defined(PIN_SD_D1)
+    pinMode(PIN_SD_D1, INPUT_PULLUP);
+#endif
+#if defined(PIN_SD_D2)
+    pinMode(PIN_SD_D2, INPUT_PULLUP);
+#endif
+#if defined(PIN_SD_D3)
+    pinMode(PIN_SD_D3, INPUT_PULLUP);
+#endif
+    pinMode(PIN_SD_CLK, INPUT_PULLUP);
+
+#if defined(PIN_SD_D1) && defined(PIN_SD_D2) && defined(PIN_SD_D3)
+    SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_D0, PIN_SD_D1, PIN_SD_D2, PIN_SD_D3);
+    vTaskDelay(pdTICKS_TO_MS(10));
+    mounted = SD_MMC.begin("/sdcard", false, false); // 4-bit mode, don't auto-format
+    if (!mounted) {
+        launcherConsolePrintln("SDMMC 4-bit mount failed, retrying 1-bit");
+        SD_MMC.end();
+        vTaskDelay(pdTICKS_TO_MS(20));
+        SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_D0);
+        vTaskDelay(pdTICKS_TO_MS(10));
+        mounted = SD_MMC.begin("/sdcard", true, false); // 1-bit mode, don't auto-format
+    }
+#else
     SD_MMC.setPins(PIN_SD_CLK, PIN_SD_CMD, PIN_SD_D0);
     vTaskDelay(pdTICKS_TO_MS(10));
-#else
+    mounted = SD_MMC.begin("/sdcard", true, false); // One bit mode, don't auto-format
 #endif
-    if (!SD_MMC.begin("/sdcard", true, false)) // One bit mode, don't auto-format
+#else
+    mounted = SD_MMC.begin("/sdcard", true, false); // One bit mode, don't auto-format
+#endif
 #elif (TFT_MOSI == SDCARD_MOSI)
-    if (!SDM.begin(_cs)) // https://github.com/Bodmer/TFT_eSPI/discussions/2420
+    mounted = SDM.begin(_cs); // https://github.com/Bodmer/TFT_eSPI/discussions/2420
 #elif defined(HEADLESS)
     if (_sck == 0 && _miso == 0 && _mosi == 0 && _cs == 0) {
         launcherConsolePrintln("SdCard pins not set");
@@ -45,30 +76,30 @@ bool setupSdCard() {
 
     sdcardSPI.begin(_sck, _miso, _mosi, _cs); // start SPI communications
     vTaskDelay(pdTICKS_TO_MS(10));
-    if (!SDM.begin(_cs, sdcardSPI))
+    mounted = SDM.begin(_cs, sdcardSPI);
 #elif defined(DONT_USE_INPUT_TASK)
 #if (TFT_MOSI != SDCARD_MOSI)
     sdcardSPI.begin(_sck, _miso, _mosi, _cs); // start SPI communications
-    if (!SDM.begin(_cs, sdcardSPI))
+    mounted = SDM.begin(_cs, sdcardSPI);
 #else
-    if (!SDM.begin(_cs))
+    mounted = SDM.begin(_cs);
 #endif
 
 #else
     sdcardSPI.begin(_sck, _miso, _mosi, _cs); // start SPI communications
     vTaskDelay(pdTICKS_TO_MS(10));
-    if (!SDM.begin(_cs, sdcardSPI))
+    mounted = SDM.begin(_cs, sdcardSPI);
 #endif
-    {
+    if (!mounted) {
         // sdcardSPI.end(); // Closes SPI connections and release pin header.
         launcherConsolePrintln("Failed to mount SDCARD");
         sdcardMounted = false;
         return false;
-    } else {
-        launcherConsolePrintln("SDCARD mounted successfully");
-        sdcardMounted = true;
-        return true;
     }
+
+    launcherConsolePrintln("SDCARD mounted successfully");
+    sdcardMounted = true;
+    return true;
 }
 
 /***************************************************************************************

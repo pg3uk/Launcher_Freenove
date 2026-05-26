@@ -15,8 +15,12 @@
 #include <pre_compiler.h>
 #include <vector>
 #if !defined(SDM)
+#if defined(USE_SD_MMC)
+#define SDM SD_MMC
+#else
 #define SDM SD
 #define SDM_SD
+#endif
 #endif
 
 #define KEY_ESCAPE 0x1B

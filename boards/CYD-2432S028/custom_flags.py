@@ -22,27 +22,41 @@ def load_board_config():
 def generate_build_flags(board_config):
     """Gera as build_flags dinamicamente baseado no JSON da board."""
     flags = []
+    extra_flags = board_config.get("build", {}).get("extra_flags", [])
 
     # Configurações de hardware
-    flags.append("-DHAS_BTN=0")
-    flags.append("-DSEL_BTN=-1")
-    flags.append("-DUP_BTN=-1")
-    flags.append("-DDW_BTN=-1")
-    flags.append("-DBTN_ACT=LOW")
-    flags.append("-DBTN_ALIAS='\"Sel\"'")
-    flags.append("-DMINBRIGHT=190")
-    flags.append("-DBACKLIGHT=21")
-    flags.append("-DLED=-1")
-    flags.append("-DLED_ON=LOW")
-    flags.append("-DHAS_TOUCH=1")
+    if not any("HAS_BTN" in flag for flag in extra_flags):
+        flags.append("-DHAS_BTN=0")
+    if not any("SEL_BTN" in flag for flag in extra_flags):
+        flags.append("-DSEL_BTN=-1")
+    if not any("UP_BTN" in flag for flag in extra_flags):
+        flags.append("-DUP_BTN=-1")
+    if not any("DW_BTN" in flag for flag in extra_flags):
+        flags.append("-DDW_BTN=-1")
+    if not any("BTN_ACT" in flag for flag in extra_flags):
+        flags.append("-DBTN_ACT=LOW")
+    if not any("BTN_ALIAS" in flag for flag in extra_flags):
+        flags.append("-DBTN_ALIAS='\"Sel\"'")
+    if not any("MINBRIGHT" in flag for flag in extra_flags):
+        flags.append("-DMINBRIGHT=190")
+    if not any("BACKLIGHT" in flag for flag in extra_flags):
+        flags.append("-DBACKLIGHT=21")
+    if not any("LED=" in flag or flag.startswith("'-D LED=") for flag in extra_flags):
+        flags.append("-DLED=-1")
+    if not any("LED_ON" in flag for flag in extra_flags):
+        flags.append("-DLED_ON=LOW")
+    if not any("HAS_TOUCH" in flag for flag in extra_flags):
+        flags.append("-DHAS_TOUCH=1")
 
     # Configuração de brilho do display
-    flags.append("-DTFT_BRIGHT_CHANNEL=0")
-    flags.append("-DTFT_BRIGHT_Bits=8")
-    flags.append("-DTFT_BRIGHT_FREQ=5000")
+    if not any("TFT_BRIGHT_CHANNEL" in flag for flag in extra_flags):
+        flags.append("-DTFT_BRIGHT_CHANNEL=0")
+    if not any("TFT_BRIGHT_Bits" in flag for flag in extra_flags):
+        flags.append("-DTFT_BRIGHT_Bits=8")
+    if not any("TFT_BRIGHT_FREQ" in flag for flag in extra_flags):
+        flags.append("-DTFT_BRIGHT_FREQ=5000")
 
     # Verifica os drivers de video habilitados na board
-    extra_flags = board_config.get("build", {}).get("extra_flags", [])
     if any("DISPLAY_ILI9341_SPI" in flag for flag in extra_flags):
         flags.append("-DILI9341_DRIVER=1")
         flags.append("-DTFT_MISO=ILI9341_SPI_BUS_MISO_IO_NUM")
@@ -59,7 +73,8 @@ def generate_build_flags(board_config):
         flags.append("-DTFT_ROW_OFS1=0")
         flags.append("-DTFT_COL_OFS2=0")
         flags.append("-DTFT_ROW_OFS2=0")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
     elif any("DISPLAY_ST7796_SPI" in flag for flag in extra_flags):
         flags.append("-DST7796_DRIVER=1")
@@ -77,7 +92,8 @@ def generate_build_flags(board_config):
         flags.append("-DTFT_ROW_OFS1=0")
         flags.append("-DTFT_COL_OFS2=0")
         flags.append("-DTFT_ROW_OFS2=0")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
     elif any("DISPLAY_ST7789_SPI" in flag for flag in extra_flags):
         flags.append("-DST7789_DRIVER=1")
@@ -95,7 +111,8 @@ def generate_build_flags(board_config):
         flags.append("-DTFT_ROW_OFS1=0")
         flags.append("-DTFT_COL_OFS2=0")
         flags.append("-DTFT_ROW_OFS2=0")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
     elif any("DISPLAY_AXS15231B_QSPI" in flag for flag in extra_flags):
         flags.append("-DAXS15231B_QSPI=1")
@@ -118,7 +135,8 @@ def generate_build_flags(board_config):
         flags.append("-DTFT_ROW_OFS1=0")
         flags.append("-DTFT_COL_OFS2=0")
         flags.append("-DTFT_ROW_OFS2=0")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
 
     elif any("DISPLAY_ST7789_I80" in flag for flag in extra_flags):
@@ -151,21 +169,24 @@ def generate_build_flags(board_config):
         flags.append("-DTFT_ROW_OFS1=0")
         flags.append("-DTFT_COL_OFS2=0")
         flags.append("-DTFT_ROW_OFS2=0")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
     elif any("DISPLAY_ST7262_PAR" in flag for flag in extra_flags):
         flags.append("-DRGB_PANEL=1")
         flags.append("-DTFT_BL=GPIO_BCKL")
         flags.append("-DTFT_WIDTH=DISPLAY_WIDTH")
         flags.append("-DTFT_HEIGHT=DISPLAY_HEIGHT")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
     elif any("DISPLAY_ST7701_PAR" in flag for flag in extra_flags):
         flags.append("-DRGB_PANEL=1")
         flags.append("-DTFT_BL=GPIO_BCKL")
         flags.append("-DTFT_WIDTH=DISPLAY_WIDTH")
         flags.append("-DTFT_HEIGHT=DISPLAY_HEIGHT")
-        flags.append("-DROTATION=0")
+        if not any("ROTATION" in flag for flag in extra_flags):
+            flags.append("-DROTATION=0")
 
 
     else:
@@ -196,7 +217,16 @@ def generate_build_flags(board_config):
         flags.append("-DCYD28_TouchR_CS=XPT2046_SPI_CONFIG_CS_GPIO_NUM")
 
     # Verifica suporte a cartão SD
-    if any("BOARD_HAS_TF" in flag for flag in extra_flags):
+    if any("USE_SD_MMC" in flag for flag in extra_flags):
+        if not any("SDCARD_CS" in flag for flag in extra_flags):
+            flags.append("-DSDCARD_CS=-1")
+        if not any("SDCARD_SCK" in flag for flag in extra_flags):
+            flags.append("-DSDCARD_SCK=PIN_SD_CLK")
+        if not any("SDCARD_MISO" in flag for flag in extra_flags):
+            flags.append("-DSDCARD_MISO=PIN_SD_D0")
+        if not any("SDCARD_MOSI" in flag for flag in extra_flags):
+            flags.append("-DSDCARD_MOSI=PIN_SD_CMD")
+    elif any("BOARD_HAS_TF" in flag for flag in extra_flags):
         flags.append("-DSDCARD_CS=TF_CS")
         flags.append("-DSDCARD_SCK=TF_SPI_SCLK")
         flags.append("-DSDCARD_MISO=TF_SPI_MISO")

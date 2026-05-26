@@ -18,7 +18,7 @@
 #define CYD28_DISPLAY_VER_RES_MAX 320
 CYD28_TouchC touch(CYD28_DISPLAY_HOR_RES_MAX, CYD28_DISPLAY_VER_RES_MAX);
 
-#elif defined(TOUCH_GT911_I2C) || defined(TOUCH_CST816S_I2C)
+#elif defined(TOUCH_GT911_I2C) || defined(TOUCH_CST816S_I2C) || defined(TOUCH_FT5X06_I2C)
 #ifdef TOUCH_GT911_I2C
 #define TOUCH_MODULES_GT911
 #define TOUCH_SDA_PIN GT911_I2C_CONFIG_SDA_IO_NUM
@@ -36,6 +36,16 @@ CYD28_TouchC touch(CYD28_DISPLAY_HOR_RES_MAX, CYD28_DISPLAY_VER_RES_MAX);
 #define TOUCH_RST_PIN CST816S_TOUCH_CONFIG_RST_GPIO_NUM
 #define TOUCH_INT_PIN CST816S_TOUCH_CONFIG_INT_GPIO_NUM
 #define TOUCH_ADDR CTS820_SLAVE_ADDRESS
+#elif defined(TOUCH_FT5X06_I2C)
+#define TOUCH_MODULES_FT5x06
+#define TOUCH_SDA_PIN FT5X06_I2C_CONFIG_SDA_IO_NUM
+#define TOUCH_SCL_PIN FT5X06_I2C_CONFIG_SCL_IO_NUM
+#define TOUCH_RST_PIN FT5X06_TOUCH_CONFIG_RST_GPIO_NUM
+#define TOUCH_INT_PIN FT5X06_TOUCH_CONFIG_INT_GPIO_NUM
+#define TOUCH_ADDR FT5x06_ADDR
+#ifndef TOUCH_INVERTED
+#define TOUCH_INVERTED 0
+#endif
 #endif
 
 #include <TouchLib.h>
@@ -60,8 +70,10 @@ public:
         t.y = (tftHeight + 20) - ti.y;
 #endif
         t.pressed = true;
+#if !defined(TOUCH_FT5X06_I2C)
         TouchLib::raw_data[0] = 0; // resets the read raw reading, that triggers TouchLib::read() to true, and
                                    // is not resetted at the lib
+#endif
         return t;
     }
 };
@@ -127,7 +139,8 @@ CYD28_TouchR touch(CYD28_DISPLAY_HOR_RES_MAX, CYD28_DISPLAY_VER_RES_MAX);
 ***************************************************************************************/
 void _setup_gpio() {
 #if !defined(HAS_CAPACITIVE_TOUCH) &&                                                                        \
-    (defined(TOUCH_GT911_I2C) || defined(TOUCH_CST816S_I2C) || defined(TOUCH_AXS15231B_I2C))
+    (defined(TOUCH_GT911_I2C) || defined(TOUCH_CST816S_I2C) || defined(TOUCH_FT5X06_I2C) ||               \
+     defined(TOUCH_AXS15231B_I2C))
     Wire.begin(TOUCH_SDA_PIN, TOUCH_SCL_PIN);
 #endif
 #if !defined(HAS_CAPACITIVE_TOUCH) && defined(CYD)
